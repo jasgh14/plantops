@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plantops"
+version = "0.1.0"
+description = "PlantOps scaffold"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "streamlit>=1.33,<2.0",
+  "PyYAML>=6.0,<7.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.env
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Outputs and logs
+outputs/logs/*
+!outputs/logs/.gitkeep
