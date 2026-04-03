@@ -1,6 +1,18 @@
-app:
-  name: PlantOps
-  environment: development
-paths:
-  data_root: data
-  output_root: outputs
+app_name: PlantOps
+model_path: ../models/stub_model/model.pkl
+label_map_path: ../models/stub_model/label_map.json
+db_path: ../data/plantops.db
+inbox_dir: ../data/inbox
+processed_dir: ../data/processed
+archive_dir: ../data/archive
+review_dir: ../data/review
+corrected_dir: ../data/corrected
+outputs_dir: ../outputs
+low_confidence_threshold: 0.6
+supported_extensions:
+  - .png
+  - .jpg
+  - .jpeg
+use_stub_model: true
+report_timezone: UTC
+logging_level: INFO
