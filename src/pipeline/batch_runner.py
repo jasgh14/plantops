@@ -12,7 +12,7 @@ from src.pipeline.move_files import move_processed_file
 from src.pipeline.process_image import process_one_image
 from src.settings import Settings
 from src.storage.db import get_connection
-from src.storage.repositories import insert_run
+from src.storage.repositories import insert_error, insert_run
 from src.storage.schema import init_database
 
 logger = get_logger(__name__)
@@ -64,12 +64,30 @@ def run_batch(
                 connection=connection,
             )
             results.append(result)
-            move_processed_file(
-                image_path,
-                settings.processed_dir,
-                archive_dir=settings.archive_dir,
-                archive=archive_processed,
-            )
+
+            try:
+                move_processed_file(
+                    image_path,
+                    settings.processed_dir,
+                    archive_dir=settings.archive_dir,
+                    archive=archive_processed,
+                )
+                result["move_status"] = "moved"
+            except Exception as exc:
+                insert_error(
+                    connection,
+                    run_id=run_id,
+                    filename=image_path.name,
+                    stage="move",
+                    error_message=str(exc),
+                    created_at=_utc_now(),
+                )
+                logger.exception("Move failed for %s", image_path)
+                result["move_status"] = "failed"
+                result["move_error"] = str(exc)
+                if result.get("status") == "processed":
+                    result["status"] = "failed"
+                    result["stage"] = "move"
 
         successful = sum(1 for item in results if item.get("status") == "processed")
         failed = len(results) - successful

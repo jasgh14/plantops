@@ -72,19 +72,39 @@ def test_run_batch_is_resilient_and_persists_outputs(tmp_path: Path) -> None:
     assert len(list(settings.processed_dir.iterdir())) == 2
 
 
-def test_run_batch_can_process_explicit_paths_only(tmp_path: Path) -> None:
+def test_run_batch_continues_when_move_fails(tmp_path: Path, monkeypatch) -> None:
     settings = _settings(tmp_path)
     settings.inbox_dir.mkdir(parents=True, exist_ok=True)
 
-    stable_path = settings.inbox_dir / "stable.jpg"
-    unstable_path = settings.inbox_dir / "still-copying.jpg"
-    Image.new("RGB", (32, 32), color=(32, 160, 64)).save(stable_path)
-    Image.new("RGB", (32, 32), color=(64, 32, 160)).save(unstable_path)
+    first = settings.inbox_dir / "first.jpg"
+    second = settings.inbox_dir / "second.jpg"
+    Image.new("RGB", (32, 32), color=(128, 64, 64)).save(first)
+    Image.new("RGB", (32, 32), color=(64, 128, 64)).save(second)
 
-    summary = run_batch(settings=settings, input_dir=settings.inbox_dir, input_paths=[stable_path])
+    from src.pipeline import batch_runner
 
-    assert summary["total_files"] == 1
+    original_move = batch_runner.move_processed_file
+
+    def move_with_failure(image_path: Path, *args, **kwargs) -> None:
+        if image_path.name == "first.jpg":
+            raise OSError("simulated move failure")
+        original_move(image_path, *args, **kwargs)
+
+    monkeypatch.setattr(batch_runner, "move_processed_file", move_with_failure)
+
+    summary = run_batch(settings=settings, input_dir=settings.inbox_dir)
+
+    assert summary["total_files"] == 2
     assert summary["successful_files"] == 1
-    assert summary["failed_files"] == 0
-    assert not stable_path.exists()
-    assert unstable_path.exists()
+    assert summary["failed_files"] == 1
+
+    run_id = str(summary["run_id"])
+    with get_connection(settings.db_path) as connection:
+        pred_count = connection.execute("SELECT COUNT(*) AS c FROM predictions WHERE run_id = ?", (run_id,)).fetchone()["c"]
+        move_errors = connection.execute(
+            "SELECT COUNT(*) AS c FROM errors WHERE run_id = ? AND stage = 'move'",
+            (run_id,),
+        ).fetchone()["c"]
+
+    assert pred_count == 2
+    assert move_errors == 1
