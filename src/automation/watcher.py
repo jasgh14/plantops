@@ -134,7 +134,7 @@ class StableFileWatcher(FileSystemEventHandler):
             return
 
         logger.info("Watcher triggering full pipeline for %d stable file(s)", len(ready_paths))
-        result = full_pipeline_job(self.settings)
+        result = full_pipeline_job(self.settings, input_paths=ready_paths)
         logger.info("Watcher pipeline result: %s", json.dumps(result, default=str))
 
         for path in ready_paths:
