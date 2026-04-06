@@ -130,3 +130,41 @@ def test_cli_generate_report_module_runs(tmp_path) -> None:
     payload = json.loads(result.stdout)
     assert (outputs_dir / "reports" / f"{run_id}_report.md").exists()
     assert payload["report_markdown"].endswith(f"{run_id}_report.md")
+
+
+def test_generate_run_report_fetches_historical_run_summary_beyond_default_limit(tmp_path) -> None:
+    db_path = tmp_path / "report_limit.db"
+    outputs_dir = tmp_path / "outputs_limit"
+    init_database(db_path)
+
+    target_run_id = "run-000"
+    with get_connection(db_path) as connection:
+        insert_run(
+            connection,
+            run_id=target_run_id,
+            started_at="2026-01-01T00:00:00Z",
+            finished_at="2026-01-01T00:10:00Z",
+            total_files=7,
+            successful_files=6,
+            failed_files=1,
+            avg_confidence=0.82,
+            notes="historical run",
+        )
+        for index in range(1, 121):
+            run_id = f"run-{index:03d}"
+            insert_run(
+                connection,
+                run_id=run_id,
+                started_at=f"2026-01-02T00:{index % 60:02d}:00Z",
+                finished_at=f"2026-01-02T01:{index % 60:02d}:00Z",
+                total_files=1,
+                successful_files=1,
+                failed_files=0,
+                avg_confidence=0.9,
+            )
+
+    outputs = generate_run_report(db_path=db_path, run_id=target_run_id, outputs_root=outputs_dir)
+    summary = json.loads(outputs["summary_json"].read_text(encoding="utf-8"))
+
+    assert summary["processed_counts"]["total_files"] == 7
+    assert summary["success_failure"]["successful_files"] == 6
