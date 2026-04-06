@@ -59,28 +59,28 @@ class StableFileWatcher(FileSystemEventHandler):
         return path.suffix.lower() in set(self.settings.supported_extensions)
 
     def _mark_pending(self, path: Path) -> None:
-        resolved = path.resolve()
-        if resolved in self.processed_paths:
+        inbox_path = path if path.is_absolute() else (self.settings.inbox_dir / path).absolute()
+        if inbox_path in self.processed_paths:
             return
 
-        signature = _file_signature(resolved)
+        signature = _file_signature(inbox_path)
         if signature is None:
             return
 
         now = time.monotonic()
-        existing = self.pending.get(resolved)
+        existing = self.pending.get(inbox_path)
         if existing is None:
-            self.pending[resolved] = {
+            self.pending[inbox_path] = {
                 "signature": signature,
                 "last_change_at": now,
             }
-            logger.info("Watcher queued file: %s", resolved)
+            logger.info("Watcher queued file: %s", inbox_path)
             return
 
         if existing["signature"] != signature:
             existing["signature"] = signature
             existing["last_change_at"] = now
-            logger.info("Watcher observed file update: %s", resolved)
+            logger.info("Watcher observed file update: %s", inbox_path)
 
     def _seed_initial_files(self) -> None:
         for candidate in self.settings.inbox_dir.iterdir():

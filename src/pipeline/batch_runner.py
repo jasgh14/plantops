@@ -45,12 +45,12 @@ def run_batch(
         supported = {ext.lower() for ext in settings.supported_extensions}
         images = []
         for candidate in input_paths:
-            resolved = Path(candidate).resolve()
-            if not resolved.exists() or not resolved.is_file():
+            candidate_path = Path(candidate)
+            if not candidate_path.exists() or not candidate_path.is_file():
                 continue
-            if resolved.suffix.lower() not in supported:
+            if candidate_path.suffix.lower() not in supported:
                 continue
-            images.append(resolved)
+            images.append(candidate_path)
 
     results: list[dict[str, object]] = []
     with get_connection(settings.db_path) as connection:

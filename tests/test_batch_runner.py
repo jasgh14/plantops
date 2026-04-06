@@ -88,3 +88,29 @@ def test_run_batch_can_process_explicit_paths_only(tmp_path: Path) -> None:
     assert summary["failed_files"] == 0
     assert not stable_path.exists()
     assert unstable_path.exists()
+
+
+def test_run_batch_explicit_symlink_keeps_target_file(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    settings.inbox_dir.mkdir(parents=True, exist_ok=True)
+    external_dir = tmp_path / "external"
+    external_dir.mkdir(parents=True, exist_ok=True)
+
+    target_path = external_dir / "target.jpg"
+    link_path = settings.inbox_dir / "linked.jpg"
+    Image.new("RGB", (32, 32), color=(200, 32, 32)).save(target_path)
+
+    try:
+        link_path.symlink_to(target_path)
+    except OSError:
+        # Symlink creation may not be available in some environments (e.g., restricted Windows policy).
+        return
+
+    summary = run_batch(settings=settings, input_dir=settings.inbox_dir, input_paths=[link_path])
+
+    assert summary["total_files"] == 1
+    assert summary["successful_files"] == 1
+    assert summary["failed_files"] == 0
+    assert target_path.exists()
+    assert not link_path.exists()
+    assert (settings.processed_dir / "linked.jpg").exists()
