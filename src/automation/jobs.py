@@ -30,9 +30,14 @@ def _latest_run_id(db_path: Path) -> str | None:
     return str(row["run_id"])
 
 
-def full_pipeline_job(settings: Settings) -> dict[str, Any]:
-    logger.info("Automation job started: full_pipeline_job (inbox=%s)", settings.inbox_dir)
-    summary = run_batch(settings=settings, input_dir=settings.inbox_dir)
+def full_pipeline_job(settings: Settings, input_paths: list[Path] | None = None) -> dict[str, Any]:
+    target_scope = "selected_paths" if input_paths is not None else "inbox"
+    logger.info(
+        "Automation job started: full_pipeline_job (scope=%s inbox=%s)",
+        target_scope,
+        settings.inbox_dir,
+    )
+    summary = run_batch(settings=settings, input_dir=settings.inbox_dir, input_paths=input_paths)
     logger.info(
         "Automation job finished: full_pipeline_job (run_id=%s total_files=%s)",
         summary.get("run_id"),

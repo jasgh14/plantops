@@ -70,3 +70,21 @@ def test_run_batch_is_resilient_and_persists_outputs(tmp_path: Path) -> None:
     remaining = sorted(path.name for path in settings.inbox_dir.iterdir())
     assert remaining == ["ignore.txt"]
     assert len(list(settings.processed_dir.iterdir())) == 2
+
+
+def test_run_batch_can_process_explicit_paths_only(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    settings.inbox_dir.mkdir(parents=True, exist_ok=True)
+
+    stable_path = settings.inbox_dir / "stable.jpg"
+    unstable_path = settings.inbox_dir / "still-copying.jpg"
+    Image.new("RGB", (32, 32), color=(32, 160, 64)).save(stable_path)
+    Image.new("RGB", (32, 32), color=(64, 32, 160)).save(unstable_path)
+
+    summary = run_batch(settings=settings, input_dir=settings.inbox_dir, input_paths=[stable_path])
+
+    assert summary["total_files"] == 1
+    assert summary["successful_files"] == 1
+    assert summary["failed_files"] == 0
+    assert not stable_path.exists()
+    assert unstable_path.exists()
