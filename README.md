@@ -10,14 +10,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run
+## Starter usage
 
 ```bash
-make run-app
-```
-
-## Test
-
-```bash
-make test
+python -m src.automation.watcher
+python -m src.automation.scheduler --interval-seconds 30 --job full_pipeline
+python -m src.cli.generate_report --run-id <RUN_ID>
 ```
