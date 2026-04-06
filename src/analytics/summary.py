@@ -58,8 +58,8 @@ def get_healthy_vs_diseased_split(db_path: str | Path, run_id: str | None = None
         connection.close()
 
 
-def get_run_level_summaries(db_path: str | Path, limit: int = 100) -> pd.DataFrame:
-    """Return recent run-level metrics."""
+def get_run_level_summaries(db_path: str | Path, limit: int | None = 100) -> pd.DataFrame:
+    """Return run-level metrics ordered by most-recent start time."""
     connection = connect(db_path)
     try:
         query = """
@@ -88,9 +88,13 @@ def get_run_level_summaries(db_path: str | Path, limit: int = 100) -> pd.DataFra
                 r.failed_files,
                 r.avg_confidence
             ORDER BY r.started_at DESC, r.run_id DESC
-            LIMIT ?
         """
-        return pd.read_sql_query(query, connection, params=(limit,))
+        params: tuple[int, ...] = ()
+        if limit is not None:
+            query += "\nLIMIT ?"
+            params = (limit,)
+
+        return pd.read_sql_query(query, connection, params=params)
     finally:
         connection.close()
 

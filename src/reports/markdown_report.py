@@ -72,7 +72,7 @@ def generate_run_report(
     predictions_over_time_df = get_predictions_over_time(db_path=db_path, run_id=run_id)
     low_confidence_trend_df = get_low_confidence_trend(db_path=db_path, run_id=run_id)
     review_queue_df = get_recent_review_queue_items(db_path=db_path, run_id=run_id)
-    run_summaries_df = get_run_level_summaries(db_path=db_path)
+    run_summaries_df = get_run_level_summaries(db_path=db_path, limit=None)
     failure_counts = get_failure_counts(db_path=db_path, run_id=run_id)
 
     run_summary = _pick_run_summary(run_summaries_df, run_id)
