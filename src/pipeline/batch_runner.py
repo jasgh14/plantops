@@ -85,9 +85,6 @@ def run_batch(
                 logger.exception("Move failed for %s", image_path)
                 result["move_status"] = "failed"
                 result["move_error"] = str(exc)
-                if result.get("status") == "processed":
-                    result["status"] = "failed"
-                    result["stage"] = "move"
 
         successful = sum(1 for item in results if item.get("status") == "processed")
         failed = len(results) - successful

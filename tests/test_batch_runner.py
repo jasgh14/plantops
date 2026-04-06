@@ -95,8 +95,9 @@ def test_run_batch_continues_when_move_fails(tmp_path: Path, monkeypatch) -> Non
     summary = run_batch(settings=settings, input_dir=settings.inbox_dir)
 
     assert summary["total_files"] == 2
-    assert summary["successful_files"] == 1
-    assert summary["failed_files"] == 1
+    assert summary["successful_files"] == 2
+    assert summary["failed_files"] == 0
+    assert summary["avg_confidence"] > 0
 
     run_id = str(summary["run_id"])
     with get_connection(settings.db_path) as connection:
@@ -108,3 +109,6 @@ def test_run_batch_continues_when_move_fails(tmp_path: Path, monkeypatch) -> Non
 
     assert pred_count == 2
     assert move_errors == 1
+    move_results = {str(item["filename"]): str(item.get("move_status")) for item in summary["results"]}
+    assert move_results["first.jpg"] == "failed"
+    assert move_results["second.jpg"] == "moved"
