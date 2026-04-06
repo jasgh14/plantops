@@ -31,6 +31,7 @@ def run_batch(
     *,
     settings: Settings,
     input_dir: Path | None = None,
+    input_paths: list[Path] | None = None,
     archive_processed: bool = False,
 ) -> dict[str, object]:
     run_id = _new_run_id()
@@ -38,7 +39,18 @@ def run_batch(
     directory = Path(input_dir or settings.inbox_dir)
 
     init_database(settings.db_path)
-    images = discover_images(directory, settings.supported_extensions)
+    if input_paths is None:
+        images = discover_images(directory, settings.supported_extensions)
+    else:
+        supported = {ext.lower() for ext in settings.supported_extensions}
+        images = []
+        for candidate in input_paths:
+            resolved = Path(candidate).resolve()
+            if not resolved.exists() or not resolved.is_file():
+                continue
+            if resolved.suffix.lower() not in supported:
+                continue
+            images.append(resolved)
 
     results: list[dict[str, object]] = []
     with get_connection(settings.db_path) as connection:
