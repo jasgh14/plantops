@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 
@@ -39,7 +39,7 @@ def format_timestamp(value: object) -> str:
 
 def utc_now_iso() -> str:
     """Return current UTC timestamp string used for review updates."""
-    return datetime.now(UTC).isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def reports_dir(settings: Settings) -> Path:
