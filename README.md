@@ -193,7 +193,7 @@ This enables repeatable local testing and pipeline validation before shipping a 
 
 ---
 
-## How to plug in a real model later
+## How to plug in a real model
 
 1. Add real model artifacts under `models/`.
 2. Update/extend loader behavior in `src/inference/model_loader.py`.
